@@ -45,15 +45,25 @@ import com.thoughtworks.xstream.mapper.MapperWrapper;
 @Component
 public class XStreamJSONSerialization implements JSONSerialization {
 
-	protected final HttpServletResponse response;
+	protected static final String DEFAULT_NEW_LINE = "";
+    protected static final char[] DEFAULT_LINE_INDENTER = { };
+    
+    protected final HttpServletResponse response;
 	protected final TypeNameExtractor extractor;
 	protected final ProxyInitializer initializer;
-	private HierarchicalStreamDriver driver =  new JsonHierarchicalStreamDriver();
+	private HierarchicalStreamDriver driver;
 
 	public XStreamJSONSerialization(HttpServletResponse response, TypeNameExtractor extractor, ProxyInitializer initializer) {
 		this.response = response;
 		this.extractor = extractor;
 		this.initializer = initializer;
+		
+        driver = new JsonHierarchicalStreamDriver() {
+            @Override
+            public HierarchicalStreamWriter createWriter(Writer writer) {
+                return new JsonWriter(writer, DEFAULT_LINE_INDENTER, DEFAULT_NEW_LINE);
+            }
+        };
 	}
 
 	public boolean accepts(String format) {
@@ -99,13 +109,13 @@ public class XStreamJSONSerialization implements JSONSerialization {
 	}
 
 	public <T> NoRootSerialization withoutRoot() {
-		this.driver = new JsonHierarchicalStreamDriver() {
+		driver = new JsonHierarchicalStreamDriver() {
 			@Override
 			public HierarchicalStreamWriter createWriter(Writer writer) {
-				return new JsonWriter(writer, JsonWriter.DROP_ROOT_MODE);
+				return new JsonWriter(writer, DEFAULT_LINE_INDENTER, DEFAULT_NEW_LINE, JsonWriter.DROP_ROOT_MODE);
 			}
 		};
+		
 		return this;
 	}
-
 }
